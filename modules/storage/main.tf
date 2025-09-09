@@ -62,3 +62,37 @@ resource "aws_s3_bucket_lifecycle_configuration" "temp_storage_lifecycle" {
     }
   }
 }
+
+# Explicit bucket policy to deny all public access
+resource "aws_s3_bucket_policy" "storage_deny_public" {
+  for_each = var.buckets
+  
+  bucket = aws_s3_bucket.storage_buckets[each.key].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "DenyPublicAccess"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource = [
+          aws_s3_bucket.storage_buckets[each.key].arn,
+          "${aws_s3_bucket.storage_buckets[each.key].arn}/*"
+        ]
+        Condition = {
+          StringNotEquals = {
+            "aws:PrincipalServiceName" = [
+              "cloudfront.amazonaws.com",
+              "logging.s3.amazonaws.com"
+            ]
+          }
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      }
+    ]
+  })
+}

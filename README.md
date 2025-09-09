@@ -13,7 +13,7 @@ This Terraform configuration creates 10 S3 buckets distributed across 3 modules:
 - **temp-storage**: Temporary storage with automatic cleanup (7 days)
 
 ### Module 2: Application (3 buckets)
-- **web-assets**: Static website hosting with CORS
+- **web-assets**: Static web assets with CORS (private bucket)
 - **user-uploads**: User file uploads with versioning and CORS
 - **config-files**: Application configuration files with versioning
 
@@ -70,10 +70,11 @@ This Terraform configuration creates 10 S3 buckets distributed across 3 modules:
 
 - **Encryption**: AES256 server-side encryption
 - **Versioning**: Enabled for critical buckets
-- **Public Access**: Blocked by default
+- **Public Access**: Completely blocked on ALL buckets
+- **Bucket Policies**: Explicit deny policies for public access
 - **Lifecycle**: Automatic transitions for analytics buckets
-- **CORS**: Enabled for application buckets
-- **Website**: Static hosting for web-assets bucket
+- **CORS**: Enabled for application buckets (private access only)
+- **Security**: Multiple layers of protection against public exposure
 
 ## Outputs
 

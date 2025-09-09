@@ -62,7 +62,7 @@ module "application_buckets" {
     "web-assets" = {
       versioning_enabled = false
       encryption_enabled = true
-      public_access_block = false
+      public_access_block = true
       cors_enabled = true
     }
     "user-uploads" = {

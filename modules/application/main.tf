@@ -33,7 +33,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "application_encry
 }
 
 resource "aws_s3_bucket_public_access_block" "application_pab" {
-  for_each = { for k, v in var.buckets : k => v if v.public_access_block }
+  for_each = var.buckets
   
   bucket = aws_s3_bucket.application_buckets[each.key].id
 
@@ -57,17 +57,56 @@ resource "aws_s3_bucket_cors_configuration" "application_cors" {
   }
 }
 
-# Static website configuration for web-assets bucket
-resource "aws_s3_bucket_website_configuration" "web_assets_website" {
-  count = contains(keys(var.buckets), "web-assets") ? 1 : 0
+# Explicit bucket policy to deny all public access
+resource "aws_s3_bucket_policy" "application_deny_public" {
+  for_each = var.buckets
   
-  bucket = aws_s3_bucket.application_buckets["web-assets"].id
+  bucket = aws_s3_bucket.application_buckets[each.key].id
 
-  index_document {
-    suffix = "index.html"
-  }
-
-  error_document {
-    key = "error.html"
-  }
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "DenyPublicAccess"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource = [
+          aws_s3_bucket.application_buckets[each.key].arn,
+          "${aws_s3_bucket.application_buckets[each.key].arn}/*"
+        ]
+        Condition = {
+          StringNotEquals = {
+            "aws:PrincipalServiceName" = [
+              "cloudfront.amazonaws.com",
+              "logging.s3.amazonaws.com"
+            ]
+          }
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      }
+    ]
+  })
 }
+
+# Note: Static website configuration removed to ensure bucket remains private
+# If you need static website hosting, you would need to:
+# 1. Set public_access_block = false for web-assets bucket
+# 2. Add appropriate bucket policy for public read access
+# 3. Uncomment the website configuration below
+#
+# resource "aws_s3_bucket_website_configuration" "web_assets_website" {
+#   count = contains(keys(var.buckets), "web-assets") ? 1 : 0
+#   
+#   bucket = aws_s3_bucket.application_buckets["web-assets"].id
+#
+#   index_document {
+#     suffix = "index.html"
+#   }
+#
+#   error_document {
+#     key = "error.html"
+#   }
+# }

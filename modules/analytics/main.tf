@@ -77,3 +77,36 @@ resource "aws_s3_bucket_lifecycle_configuration" "analytics_lifecycle" {
     }
   }
 }
+
+resource "aws_s3_bucket_policy" "analytics_deny_public" {
+  for_each = var.buckets
+  
+  bucket = aws_s3_bucket.analytics_buckets[each.key].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "DenyPublicAccess"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource = [
+          aws_s3_bucket.analytics_buckets[each.key].arn,
+          "${aws_s3_bucket.analytics_buckets[each.key].arn}/*"
+        ]
+        Condition = {
+          StringNotEquals = {
+            "aws:PrincipalServiceName" = [
+              "cloudfront.amazonaws.com",
+              "logging.s3.amazonaws.com"
+            ]
+          }
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      }
+    ]
+  })
+}
