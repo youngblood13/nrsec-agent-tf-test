@@ -15,7 +15,7 @@ This Terraform configuration creates 10 S3 buckets distributed across 3 modules:
 ### Module 2: Application (3 buckets)
 - **web-assets**: Static web assets with CORS (private bucket)
 - **user-uploads**: User file uploads with versioning and CORS
-- **config-files**: Application configuration files with versioning
+- **config-files**: Application configuration files with versioning.!!!!!
 
 ### Module 3: Analytics (3 buckets)
 - **raw-logs**: Raw log data with lifecycle management
